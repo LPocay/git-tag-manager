@@ -1,3 +1,4 @@
+use colored::Colorize;
 use std::{fmt, process::Command};
 
 use inquire::{InquireError, Select};
@@ -10,7 +11,10 @@ struct Version {
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}.{}.{}", self.mayor, self.minor, self.patch)
+        let formated_colorized = format!("{}.{}.{}", self.mayor, self.minor, self.patch)
+            .green()
+            .bold();
+        write!(f, "{}", formated_colorized)
     }
 }
 
@@ -76,6 +80,8 @@ impl VersionManager {
             .expect("Error");
         if out.status.success() {
             println!("Your new version is: {}", new_version);
+            println!("To push your new version you should excute:");
+            println!("git push origin {}", new_version);
         } else {
             let string_out = String::from_utf8_lossy(&out.stdout);
             println!("Error escuting command: {}", string_out);
