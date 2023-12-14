@@ -1,5 +1,7 @@
 use std::{fmt, process::Command};
 
+use inquire::{InquireError, Select};
+
 struct Version {
     mayor: i32,
     minor: i32,
@@ -34,7 +36,99 @@ impl VersionManager {
     }
 
     fn last_version(&self) -> &Version {
-        &self.versions[0]
+        &self.versions.last().expect("No last")
+    }
+
+    fn show_options(&self) {
+        let options: Vec<&str> = vec![
+            "Create new mayor version",
+            "Create new minor version",
+            "Create new patch version",
+        ];
+
+        let ans: Result<&str, InquireError> =
+            Select::new("What do you want to do?", options).prompt();
+
+        match ans {
+            Ok(choice) => {
+                if choice == "Create new mayor version" {
+                    self.update_mayor_version();
+                }
+                if choice == "Create new minor version" {
+                    self.update_minor_version();
+                }
+                if choice == "Create new patch version" {
+                    self.update_patch_version();
+                }
+            }
+            Err(_) => println!("There was an error, please try again"),
+        }
+    }
+
+    fn change_version(&self, new_version: Version) {
+        let out = Command::new("git")
+            .arg("tag")
+            .arg(format!("-a {}", new_version))
+            .arg(format!("-m \"Version {}\"", new_version))
+            .output()
+            .expect("");
+        if out.status.success() {
+            println!("Your new version is: {}", new_version);
+        } else {
+            println!("Error escuting command");
+        }
+    }
+
+    fn confirm_version(&self, new_version: Version) {
+        println!("Your new version will look like this: {}", new_version);
+        let options: Vec<&str> = vec!["Yes", "No"];
+
+        let ans: Result<&str, InquireError> =
+            Select::new("Do you want to continue?", options).prompt();
+        match ans {
+            Ok(ch) => {
+                if ch == "Yes" {
+                    self.change_version(new_version);
+                }
+            }
+            Err(_) => println!("Error"),
+        }
+    }
+
+    fn update_mayor_version(&self) {
+        let last_version = self.last_version();
+
+        let new_mayor_version = Version {
+            mayor: last_version.mayor + 1,
+            minor: 0,
+            patch: 0,
+        };
+
+        self.confirm_version(new_mayor_version);
+    }
+
+    fn update_minor_version(&self) {
+        let last_version = self.last_version();
+
+        let new_mayor_version = Version {
+            mayor: last_version.mayor,
+            minor: last_version.minor + 1,
+            patch: 0,
+        };
+
+        self.confirm_version(new_mayor_version);
+    }
+
+    fn update_patch_version(&self) {
+        let last_version = self.last_version();
+
+        let new_mayor_version = Version {
+            mayor: last_version.mayor,
+            minor: last_version.minor,
+            patch: last_version.patch + 1,
+        };
+
+        self.confirm_version(new_mayor_version);
     }
 }
 
@@ -64,8 +158,10 @@ fn main() {
         version_manager.validate_order();
 
         println!(
-            "Your current newer version: {}",
+            "Your current newer version is: {}",
             version_manager.last_version()
         );
+
+        version_manager.show_options();
     }
 }
