@@ -68,14 +68,17 @@ impl VersionManager {
     fn change_version(&self, new_version: Version) {
         let out = Command::new("git")
             .arg("tag")
-            .arg(format!("-a {}", new_version))
-            .arg(format!("-m \"Version {}\"", new_version))
+            .arg("-a")
+            .arg(format!("{}", new_version))
+            .arg("-m")
+            .arg(format!("\"Version {}\"", new_version))
             .output()
-            .expect("");
+            .expect("Error");
         if out.status.success() {
             println!("Your new version is: {}", new_version);
         } else {
-            println!("Error escuting command");
+            let string_out = String::from_utf8_lossy(&out.stdout);
+            println!("Error escuting command: {}", string_out);
         }
     }
 
