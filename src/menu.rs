@@ -82,25 +82,52 @@ impl Menu {
         match ans {
             Ok(ch) => {
                 if ch == "Yes" {
-                    Menu::change_version(new_version);
+                    self.change_version(new_version);
                 }
             }
             Err(_) => println!("Error"),
         }
     }
 
-    fn change_version(new_version: Version) {
+    fn change_version(&self, new_version: Version) {
         let result = GitCommands::tag_version(new_version.get_version_string());
         match result {
             Ok(_) => {
                 println!("Your new version is: {}", new_version);
-                println!("To push your new version you should excute:");
-                println!("git push origin {}", new_version);
+                self.show_push_menu();
             }
             Err(err) => {
                 println!("{}", err);
                 return;
             }
+        }
+    }
+
+    fn show_push_menu(&self) {
+        let options: Vec<&str> = vec!["Yes", "No"];
+        let ans: Result<&str, InquireError> =
+            Select::new("Do you want to push your new version?", options).prompt();
+        match ans {
+            Ok(ch) => {
+                let last_version = self.version_manager.last_version();
+                if ch == "Yes" {
+                    println!("Pushing your new version");
+                    let result = GitCommands::push_tag(last_version.get_version_string());
+                    match result {
+                        Ok(_) => {
+                            println!("New version pushed successfully");
+                        }
+                        Err(err) => {
+                            println!("{}", err);
+                            return;
+                        }
+                    }
+                } else {
+                    println!("To push your new version you should excute:");
+                    println!("git push origin {}", last_version);
+                }
+            }
+            Err(_) => println!("Error"),
         }
     }
 }

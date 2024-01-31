@@ -29,4 +29,19 @@ impl GitCommands {
             Err(format!("Error escuting command: {}", string_out))
         }
     }
+
+    pub fn push_tag(version_string: String) -> Result<(), String> {
+        let out = Command::new("git")
+            .arg("push")
+            .arg("origin")
+            .arg(&version_string)
+            .output()
+            .expect("Error");
+        if out.status.success() {
+            Ok(())
+        } else {
+            let string_out = String::from_utf8_lossy(&out.stderr);
+            Err(format!("Error escuting command: {}", string_out))
+        }
+    }
 }
