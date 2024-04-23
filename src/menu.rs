@@ -94,7 +94,7 @@ impl Menu {
         match result {
             Ok(_) => {
                 println!("Your new version is: {}", new_version);
-                self.show_push_menu();
+                self.show_push_menu(new_version);
             }
             Err(err) => {
                 println!("{}", err);
@@ -103,16 +103,15 @@ impl Menu {
         }
     }
 
-    fn show_push_menu(&self) {
+    fn show_push_menu(&self, new_version: Version) {
         let options: Vec<&str> = vec!["Yes", "No"];
         let ans: Result<&str, InquireError> =
             Select::new("Do you want to push your new version?", options).prompt();
         match ans {
             Ok(ch) => {
-                let last_version = self.version_manager.last_version();
                 if ch == "Yes" {
                     println!("Pushing your new version");
-                    let result = GitCommands::push_tag(last_version.get_version_string());
+                    let result = GitCommands::push_tag(new_version.get_version_string());
                     match result {
                         Ok(_) => {
                             println!("New version pushed successfully");
@@ -124,7 +123,7 @@ impl Menu {
                     }
                 } else {
                     println!("To push your new version you should excute:");
-                    println!("git push origin {}", last_version);
+                    println!("git push origin {}", new_version);
                 }
             }
             Err(_) => println!("Error"),
